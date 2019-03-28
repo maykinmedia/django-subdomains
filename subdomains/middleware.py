@@ -64,7 +64,7 @@ class SubdomainURLRoutingMiddleware(SubdomainMiddleware):
 
         subdomain = getattr(request, 'subdomain', UNSET)
 
-        if subdomain is not UNSET:
+        if subdomain is not None:
             urlconf = settings.SUBDOMAIN_URLCONFS.get(subdomain)
             if urlconf is None:
                 urlconf = settings.SUBDOMAIN_URLCONFS.get('*')
