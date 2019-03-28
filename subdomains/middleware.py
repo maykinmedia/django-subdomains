@@ -38,7 +38,7 @@ class SubdomainMiddleware(MiddlewareMixin):
         domain, host = map(lower,
             (self.get_domain_for_request(request), request.get_host()))
 
-        pattern = r'^(?:(?P<subdomain>.*?)\.)?%s(?::.*)?$' % re.escape(domain)
+        pattern  = r'(?P<subdomain>.+)\.{}'.format(re.escape(domain))
         matches = re.match(pattern, host)
 
         if matches:
