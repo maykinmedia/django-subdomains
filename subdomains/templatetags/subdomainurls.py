@@ -9,7 +9,7 @@ UNSET = object()
 
 
 @register.simple_tag(takes_context=True)
-def url(context, view, subdomain=UNSET, *args, **kwargs):
+def url_sub(context, view, subdomain=UNSET, *args, **kwargs):
     """
     Resolves a URL in a template, using subdomain-based URL resolution.
 
