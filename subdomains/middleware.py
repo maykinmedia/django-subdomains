@@ -36,28 +36,21 @@ class SubdomainMiddleware(MiddlewareMixin):
         Adds a ``subdomain`` attribute to the ``request`` parameter.
         """
         domain, host = map(lower,
-            (self.get_domain_for_request(request), request.get_host()))
-
-        pattern  = r'(?P<subdomain>.+)\.{}'.format(re.escape(domain))
+                           (self.get_domain_for_request(request), request.get_host()))
+        divider = getattr(settings, 'SUBDOMAIN_SEPARATOR', '.')
+        if divider != '.':
+            pattern = r'(?P<subdomain_base>.+)\.'
+            matches = re.match(pattern, domain)
+            domain = matches.group('subdomain_base')
+        pattern = r'(?P<subdomain>.+){}{}'.format(re.escape(divider), domain)
         matches = re.match(pattern, host)
-
         if matches:
-            subdomain = matches.group('subdomain')
-            regex = getattr(settings,'SUBDOMAIN_REGEX', None)
-            if regex:
-                submatches = re.match(regex, subdomain)
-                if submatches:
-                    request.subdomain = submatches.group('submatch') 
-                else: 
-                    request.subdomain = None
-                    logger.warning('The host %s does not belong to the domain %s and the submatchs %s, '
-                        'unable to identify the subdomain for this request',
-                        request.get_host(), re.escape(submatches), domain)
+            request.subdomain = matches.group('subdomain')
         else:
             request.subdomain = None
             logger.warning('The host %s does not belong to the domain %s, '
-                'unable to identify the subdomain for this request',
-                request.get_host(), domain)
+                           'unable to identify the subdomain for this request',
+                           request.get_host(), domain)
         if settings.DEBUG:
             logger.debug('Subdomain: {}'.format(request.subdomain))
 
@@ -66,6 +59,7 @@ class SubdomainURLRoutingMiddleware(SubdomainMiddleware):
     """
     A middleware class that allows for subdomain-based URL routing.
     """
+
     def process_request(self, request):
         """
         Sets the current request's ``urlconf`` attribute to the urlconf
@@ -75,14 +69,13 @@ class SubdomainURLRoutingMiddleware(SubdomainMiddleware):
         super(SubdomainURLRoutingMiddleware, self).process_request(request)
 
         subdomain = getattr(request, 'subdomain', UNSET)
-
         if subdomain is not None:
             urlconf = settings.SUBDOMAIN_URLCONFS.get(subdomain)
             if urlconf is None:
                 urlconf = settings.SUBDOMAIN_URLCONFS.get('*')
             if urlconf is not None:
                 logger.debug("Using urlconf %s for subdomain: %s",
-                    repr(urlconf), repr(subdomain))
+                             repr(urlconf), repr(subdomain))
                 request.urlconf = urlconf
 
     def process_response(self, request, response):
