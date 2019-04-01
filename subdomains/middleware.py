@@ -42,12 +42,24 @@ class SubdomainMiddleware(MiddlewareMixin):
         matches = re.match(pattern, host)
 
         if matches:
-            request.subdomain = matches.group('subdomain')
+            subdomain = matches.group('subdomain')
+            regex = getattr(settings,'SUBDOMAIN_REGEX', None)
+            if regex:
+                submatches = re.match(regex, subdomain)
+                if submatches:
+                    request.subdomain = submatches.group('submatch') 
+                else: 
+                    request.subdomain = None
+                    logger.warning('The host %s does not belong to the domain %s and the submatchs %s, '
+                        'unable to identify the subdomain for this request',
+                        request.get_host(), re.escape(submatches), domain)
         else:
             request.subdomain = None
             logger.warning('The host %s does not belong to the domain %s, '
                 'unable to identify the subdomain for this request',
                 request.get_host(), domain)
+        if settings.DEBUG:
+            logger.debug('Subdomain: {}'.format(request.subdomain))
 
 
 class SubdomainURLRoutingMiddleware(SubdomainMiddleware):

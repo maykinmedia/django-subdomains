@@ -39,7 +39,7 @@ def urljoin(domain, path=None, scheme=None):
 
 
 def reverse(viewname, subdomain=None, scheme=None, args=None, kwargs=None,
-        current_app=None):
+            current_app=None):
     """
     Reverses a URL from the given parameters, in a similar fashion to
     :meth:`django.core.urlresolvers.reverse`.
@@ -55,10 +55,11 @@ def reverse(viewname, subdomain=None, scheme=None, args=None, kwargs=None,
 
     domain = get_domain()
     if subdomain is not None:
-        domain = '%s.%s' % (subdomain, domain)
+        separator = getattr(settings, 'SUBDOMAIN_SEPARATOR', '.')
+        domain = '{}{}{}'.format(subdomain, separator, domain)
 
     path = simple_reverse(viewname, urlconf=urlconf, args=args, kwargs=kwargs,
-        current_app=current_app)
+                          current_app=current_app)
     return urljoin(domain, path, scheme=scheme)
 
 
